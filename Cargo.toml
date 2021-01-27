@@ -1,0 +1,13 @@
+[package]
+name = "mdns-client"
+version = "0.1.0"
+authors = ["kig"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dns-message-parser="0.4.2"
+bytes="1.0.1"
+pnet = "0.27.2"
+net2 = "0.2.33"
