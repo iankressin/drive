@@ -20,7 +20,9 @@ impl TcpServer {
     }
 
     pub fn listen(&self) -> Result<(), std::io::Error> {
-        let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+        println!("TCP Listening...");
+
+        let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
 
         for stream in listener.incoming() {
             println!("Connection established!");

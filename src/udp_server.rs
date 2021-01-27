@@ -14,11 +14,17 @@ impl UdpServer {
     }
 
     pub fn listen(&self) -> Result<(), std::io::Error> {
+        println!("UDP Listening ... ");
+
+
         let mut buf = [0 as u8; 512];
         let socket = UdpBuilder::new_v4()?
             .reuse_address(true)?
-            .bind("127.0.0.1:5353")?;
+            .bind("224.0.0.251:5353")?;
         let (received, src_addr) = socket.recv_from(&mut buf).expect("Didnt received any data");
+
+        println!("New connection: {}, {}", received, src_addr);
+
         let domain_name = self.get_domain_name(buf, received);
 
         self.send_response(socket, &domain_name, &src_addr)?;
