@@ -1,15 +1,19 @@
-use std::fs::File;
+use serde::{Deserialize, Serialize};
+use std::fs::{self, File};
+use std::io;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::io;
 use std::str;
+// use serde_json::Result;
 
+#[derive(Serialize, Deserialize, Debug)]
 struct Metadata {
     name: String,
     extension: String,
     name_extension: String,
-    size: String,
+    size: u32,
+    hash: String,
 }
 
 pub struct TcpServer;
@@ -24,19 +28,84 @@ impl TcpServer {
 
         let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
 
+        // The first part of the handshake is to receive the
+        // metadata file which contains the files that the client
+        // is trying to send and decide which files the server
+        // want to receive
         for stream in listener.incoming() {
             println!("Connection established!");
+            // Which operation the client wants to execute
+            let mut op = [0 as u8; 1];
             let mut stream = stream.unwrap();
+            stream.read(&mut op).unwrap();
 
-            self.handle_file(&mut stream);
+            if op[0] == 0 {
+                // Tells the client which file the server wants to receive
+                // and store their hashes locally
+                self.handle_metadata(&mut stream);
+            }
 
-            stream.write("Thanks".as_bytes())?;
+            if op[0] == 1 {
+                println!("File")
+            }
 
-            stream.flush().unwrap();
+            // Keep receiving the files untill the client closes stream
+            // TODO: Handle stream of multiple files
+            // while !eof {
+            //     handle_file
+            // }
+
+            // println!("{:?}", &buf[..]);
         }
 
         Ok(())
     }
+
+    fn handle_metadata(&self, stream: &mut TcpStream) {
+        let mut buf = [0 as u8; 1024];
+        stream.read(&mut buf).unwrap();
+
+        // This could be a problem if buffer has a 0 in the middle of it
+        // TODO: Find a better solution
+        let eos = buf.iter().position(|&r| r == 0).unwrap();
+        let json = String::from_utf8_lossy(&buf[..eos]);
+        let incoming_metadata: Vec<Metadata> = serde_json::from_str(&json).unwrap();
+
+        for meta in &incoming_metadata {
+            println!("{:#?}", meta);
+        }
+
+        let requested_files = self.pick_files(&incoming_metadata);
+
+        stream.write(requested_files.as_bytes()).unwrap();
+        stream.flush().unwrap();
+    }
+
+    fn pick_files(&self, incoming_metadata: &Vec<Metadata>) -> String {
+        let json_metadata =
+            fs::read_to_string("./.drive/.meta.json")
+            .expect("Couldn't open the file");
+
+        let current_metadata: Vec<Metadata> = 
+            serde_json::from_str(&json_metadata)
+            .unwrap();
+
+        let mut requested_files: Vec<&Metadata> = Vec::new();
+
+        // TODO: Find a better algorithm or datascructure to
+        // find the missing files
+        for meta in incoming_metadata {
+            for data in &current_metadata {
+                if meta.hash != data.hash {
+                    requested_files.push(meta);
+                }
+            }
+        }
+
+        serde_json::to_string(&requested_files).unwrap()
+    }
+
+    fn check_hash() {}
 
     // TODO: Stream timeout
     fn handle_file(&self, stream: &mut TcpStream) {
@@ -66,7 +135,8 @@ impl TcpServer {
             name,
             extension,
             name_extension,
-            size,
+            size: 0,
+            hash: String::from(""),
         }
     }
 }
