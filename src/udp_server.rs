@@ -16,25 +16,28 @@ impl UdpServer {
     pub fn listen(&self) -> Result<(), std::io::Error> {
         println!("UDP Listening ... ");
 
-
         let mut buf = [0 as u8; 512];
         let socket = UdpBuilder::new_v4()?
             .reuse_address(true)?
             .bind("224.0.0.251:5353")?;
+
         let (received, src_addr) = socket.recv_from(&mut buf).expect("Didnt received any data");
 
         println!("New connection: {}, {}", received, src_addr);
 
         let domain_name = self.get_domain_name(buf, received);
 
-        self.send_response(socket, &domain_name, &src_addr)?;
+        self.send_response(&socket, &domain_name, &src_addr)?;
+
+        // To keep listening after a response is sent
+        self.listen()?;
 
         Ok(())
     }
 
     fn send_response(
         &self,
-        socket: UdpSocket,
+        socket: &UdpSocket,
         domain_name: &DomainName,
         src_addr: &SocketAddr,
     ) -> Result<(), std::io::Error> {
