@@ -5,6 +5,7 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::str;
+use std::thread;
 // use serde_json::Result;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,16 +47,14 @@ impl TcpServer {
             }
 
             if op[0] == 1 {
+
+                thread::spawn(move || {
+                    self.handle_file(stream);
+                });
+
+                // self.handle_file(&mut stream);
                 println!("File")
             }
-
-            // Keep receiving the files untill the client closes stream
-            // TODO: Handle stream of multiple files
-            // while !eof {
-            //     handle_file
-            // }
-
-            // println!("{:?}", &buf[..]);
         }
 
         Ok(())
@@ -94,6 +93,7 @@ impl TcpServer {
 
         // TODO: Find a better algorithm or datascructure to
         // find the missing files
+        // TODO: If !current_metadata => incoming_metadata
         for meta in incoming_metadata {
             for data in &current_metadata {
                 if meta.hash != data.hash {
@@ -108,7 +108,8 @@ impl TcpServer {
     fn check_hash() {}
 
     // TODO: Stream timeout
-    fn handle_file(&self, stream: &mut TcpStream) {
+    // TODO: Write to meta file the metadata for the file
+    fn handle_file(&self, mut stream: TcpStream) {
         let meta_offset = 72;
         let mut buf = [0 as u8; 72];
 
@@ -118,7 +119,7 @@ impl TcpServer {
         let metadata = self.get_metadata(&metabuf);
         let mut file = File::create(&metadata.name_extension).unwrap();
 
-        io::copy(stream, &mut file).unwrap();
+        io::copy(&mut stream, &mut file).unwrap();
     }
 
     fn get_metadata(&self, metabuf: &[u8]) -> Metadata {
