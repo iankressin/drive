@@ -1,6 +1,5 @@
 // TODO: Thread pool
 // TODO: Check hashes with Merkle tree
-// TODO: Write to the meta file the received files
 // TODO: Extract meta handling to a new file
 // TODO: Compare if the file is being waited
 use serde::{Deserialize, Serialize};
@@ -112,13 +111,21 @@ impl TcpServer {
                     serde_json::to_string(&incoming_metadata).unwrap()
                 } else {
                     // TODO: Refactor pls
-                    for meta in incoming_metadata {
-                        for data in &metadata {
-                            if meta.hash == data.hash {
-                                self.waiting_list
-                                    .insert(data.hash.to_owned(), data.name_extension.to_owned());
-                                requested_files.push(data);
+                    for incoming_file in incoming_metadata {
+                        let mut found = false;
+
+                        for meta in &metadata {
+                            if incoming_file.hash == meta.hash {
+                                found = true;
                             }
+                        }
+
+                        if !found {
+                            self.waiting_list.insert(
+                                incoming_file.hash.to_owned(),
+                                incoming_file.name_extension.to_owned(),
+                            );
+                            requested_files.push(incoming_file);
                         }
                     }
                     serde_json::to_string(&requested_files).unwrap()
@@ -142,6 +149,7 @@ impl TcpServer {
 
         let metabuf = &buf[0..meta_offset];
         let metadata = TcpServer::get_metadata(&metabuf);
+
         let mut file = File::create(&metadata.name_extension).unwrap();
 
         io::copy(stream, &mut file).unwrap();
