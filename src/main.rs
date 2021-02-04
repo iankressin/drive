@@ -8,7 +8,7 @@ extern crate pnet;
 
 fn main() -> Result<(), std::io::Error> {
     thread::spawn(|| {
-        let tcp_server = tcp_server::TcpServer::new();
+        let mut tcp_server = tcp_server::TcpServer::new();
         tcp_server.listen().unwrap();
     });
 
