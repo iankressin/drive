@@ -14,7 +14,6 @@ use std::net::TcpStream;
 use std::str;
 use std::sync::mpsc::{self, channel};
 use std::thread;
-use std::sync::Arc;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Metadata {
@@ -44,11 +43,8 @@ impl TcpServer {
 
         thread::spawn(move || {
             for received in rx {
-                println!("The value received from the sender is {:?}", received);
-                TcpServer::push_metadata(&received);
+                let _ = TcpServer::push_metadata(received);
             }
-
-            // println!("Meta from received file: {:#?}", deref);
         });
 
         // The first part of the handshake is to receive the
@@ -68,19 +64,16 @@ impl TcpServer {
             }
 
             if op[0] == 1 {
-                println!("The option is files!");
                 let tx_pipe = mpsc::Sender::clone(&tx);
 
                 // Maybe it should join
                 thread::spawn(move || {
-                    println!("Handling files");
                     let meta = TcpServer::handle_file(&mut stream);
 
                     match tx_pipe.send(meta) {
-                        Ok(_) => println!("All good"),
+                        Ok(_) => println!("Received"),
                         Err(err) => println!("Erro: {}", err),
                     }
-
                 });
             };
         }
@@ -107,20 +100,20 @@ impl TcpServer {
     }
 
     fn pick_files(&mut self, incoming_metadata: &Vec<Metadata>) -> String {
-        match fs::read_to_string("./.drive/.meta.json") {
-            Ok(json) => {
-                let current_metadata: Vec<Metadata> = serde_json::from_str(&json).unwrap();
+        match TcpServer::read_metadata_file() {
+            Ok(metadata) => {
                 let mut requested_files: Vec<&Metadata> = Vec::new();
 
                 // TODO: Find a better algorithm or datascructure to
                 // find the missing files
                 // TODO: If !current_metadata => incoming_metadata
-                if current_metadata.len() == 0 {
+                if metadata.len() == 0 {
+                    println!("The metada file is empty :(");
                     serde_json::to_string(&incoming_metadata).unwrap()
                 } else {
                     // TODO: Refactor pls
                     for meta in incoming_metadata {
-                        for data in &current_metadata {
+                        for data in &metadata {
                             if meta.hash == data.hash {
                                 self.waiting_list
                                     .insert(data.hash.to_owned(), data.name_extension.to_owned());
@@ -128,7 +121,6 @@ impl TcpServer {
                             }
                         }
                     }
-
                     serde_json::to_string(&requested_files).unwrap()
                 }
             }
@@ -141,6 +133,7 @@ impl TcpServer {
 
     // TODO: Stream timeout
     // TODO: Write to meta file the metadata for the file
+    // TODO: Check if the server is waiting for the file
     fn handle_file(stream: &mut TcpStream) -> Metadata {
         let meta_offset = 72;
         let mut buf = [0 as u8; 72];
@@ -156,8 +149,25 @@ impl TcpServer {
         metadata
     }
 
-    fn push_metadata(meta: &Metadata) {
-        println!("Im the push metada method and I got {:?}", meta);
+    fn push_metadata(meta: Metadata) -> Result<(), std::io::Error> {
+        let mut metadata = TcpServer::read_metadata_file().unwrap();
+        metadata.push(meta);
+
+        TcpServer::write_metadata_file(&metadata)?;
+
+        Ok(())
+    }
+
+    fn read_metadata_file() -> Result<Vec<Metadata>, std::io::Error> {
+        let json = fs::read_to_string("./.drive/.meta.json")?;
+        let current_metadata: Vec<Metadata> = serde_json::from_str(&json).unwrap();
+        Ok(current_metadata)
+    }
+
+    fn write_metadata_file(meta: &Vec<Metadata>) -> Result<(), std::io::Error> {
+        let json = serde_json::to_string(&meta).unwrap();
+        fs::write("./.drive/.meta.json", &json).unwrap();
+        Ok(())
     }
 
     fn get_metadata(metabuf: &[u8]) -> Metadata {
@@ -175,7 +185,7 @@ impl TcpServer {
             extension,
             name_extension,
             size: 0,
-            hash
+            hash,
         }
     }
 
