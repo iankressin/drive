@@ -1,3 +1,3 @@
 # Drive server
 
-cargo build && cargo run
+`cargo build && cargo run`
