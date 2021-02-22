@@ -8,8 +8,7 @@ use std::fs::{self, File};
 use std::io;
 use std::io::prelude::*;
 use std::io::ErrorKind;
-use std::net::TcpListener;
-use std::net::TcpStream;
+use std::net::{TcpListener, TcpStream};
 use std::str;
 use std::sync::mpsc::{self, channel};
 use std::thread;
@@ -90,6 +89,7 @@ impl TcpServer {
         // TODO: Find a better solution
         let eos = buf.iter().position(|&r| r == 0).unwrap();
         let json = String::from_utf8_lossy(&buf[..eos]);
+        println!("JSON: {}", json);
         let incoming_metadata: Vec<Metadata> = serde_json::from_str(&json).unwrap();
 
         let requested_files = self.pick_files(&incoming_metadata);

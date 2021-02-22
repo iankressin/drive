@@ -25,14 +25,18 @@ impl UdpServer {
 
         println!("New connection: {}, {}", received, src_addr);
 
-        let domain_name = self.get_domain_name(buf, received);
+        match self.get_domain_name(buf, received) {
+            Ok(domain_name) => {
+                self.send_response(&socket, &domain_name, &src_addr)?;
+                self.listen()?;
 
-        self.send_response(&socket, &domain_name, &src_addr)?;
-
-        // To keep listening after a response is sent
-        self.listen()?;
-
-        Ok(())
+                Ok(())
+            }
+            Err(err) => {
+                self.listen()?;
+                Err(err)
+            }
+        }
     }
 
     fn send_response(
@@ -55,16 +59,33 @@ impl UdpServer {
         Ok(())
     }
 
-    fn get_domain_name(&self, buf: [u8; 512], received: usize) -> DomainName {
+    fn get_domain_name(&self, buf: [u8; 512], received: usize) -> Result<DomainName, std::io::Error> {
         let packet = Bytes::copy_from_slice(&buf[..received]);
-        let Dns { questions, .. } = Dns::decode(packet).unwrap();
 
-        let Question { domain_name, .. } = questions
-            .first()
-            .expect("No question was asked in this packet");
+        match Dns::decode(packet) {
+            Ok(Dns { questions, .. }) => {
+                let Question { domain_name, .. } = questions
+                    .first()
+                    .expect("No question was asked in this packet");
 
-        println!("{:#?}", domain_name);
+                println!("{:#?}", domain_name);
 
-        domain_name.clone()
+                Ok(domain_name.clone())
+            }
+            Err(_) => {
+                println!("Quebrou");
+                Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
+            }
+        }
+
+        // let Dns { questions, .. } = Dns::decode(packet);
+
+        // let Question { domain_name, .. } = questions
+        //     .first()
+        //     .expect("No question was asked in this packet");
+
+        // println!("{:#?}", domain_name);
+
+        // domain_name.clone()
     }
 }
