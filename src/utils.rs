@@ -22,6 +22,7 @@ pub fn get_ipaddr() -> Ipv4Addr {
 }
 
 pub fn response_packet() -> Vec<u8> {
+    // TODO: Dinamic id
     let id = 56092;
     let flags = Flags {
         qr: true,

@@ -17,6 +17,8 @@ impl UdpServer {
         println!("UDP Listening ... ");
 
         let mut buf = [0 as u8; 512];
+
+        // Used net2 instead of std::net in order to reuse the address
         let socket = UdpBuilder::new_v4()?
             .reuse_address(true)?
             .bind("224.0.0.251:5353")?;
