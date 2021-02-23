@@ -1,8 +1,10 @@
 [package]
 name = "mdns-client"
 version = "0.1.0"
-authors = ["kig"]
+authors = ["Ian <ianguimaraes31@gmail>"]
 edition = "2018"
+license = "MIT"
+description="Exchange files locally using mDNS"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
