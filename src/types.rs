@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::net::{ TcpStream };
+use std::net::TcpStream;
 
-type Callback = fn();
+pub type Callback = fn(Metadata);
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Metadata {

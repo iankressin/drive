@@ -2,14 +2,11 @@
 // TODO: Check hashes with Merkle tree
 // TODO: Extract meta handling to a new file
 // TODO: Compare if the file is being waited
-use crate::types::Metadata;
+use crate::types::{Metadata, Callback};
 use std::collections::HashMap;
 use std::fs::{File};
 use std::io;
 use std::io::prelude::*;
-use std::net::TcpListener;
-use std::net::TcpStream;
-use std::io::ErrorKind;
 use std::net::{TcpListener, TcpStream};
 use std::str;
 use std::sync::mpsc::{self, channel};
@@ -28,7 +25,7 @@ impl<'a> TcpServer<'a> {
         }
     }
 
-    pub fn listen(&mut self) -> Result<(), std::io::Error> {
+    pub fn listen(&mut self, cb: Callback) -> Result<(), std::io::Error> {
         println!("TCP Listening...");
 
         let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
@@ -36,8 +33,7 @@ impl<'a> TcpServer<'a> {
 
         thread::spawn(move || {
             for received in rx {
-                self.metadata.push(received);
-                // let _ = self.push_metadata(received);
+                cb(received);
             }
         });
 
@@ -47,17 +43,16 @@ impl<'a> TcpServer<'a> {
         // want to receive
         for stream in listener.incoming() {
             // A thread that is responsible for writing to meta file
-
             // Which operation the client wants to execute
             let mut op = [0 as u8; 1];
             let mut stream = stream.unwrap();
             stream.read(&mut op).unwrap();
 
             match op[0] {
-                0 => {
+                0u8 => {
                     self.handle_metadata(&mut stream);
                 }
-                1 => {
+                1u8 => {
                     let tx_pipe = mpsc::Sender::clone(&tx);
 
                     thread::spawn(move || {
@@ -69,6 +64,7 @@ impl<'a> TcpServer<'a> {
                         }
                     });
                 }
+                _ => println!("No op setted in the packet")
             }
         }
 
@@ -109,7 +105,8 @@ impl<'a> TcpServer<'a> {
                 for incoming_file in incoming_metadata {
                     let mut found = false;
 
-                    for meta in self.metadata {
+                    for meta in self.metadata.iter() {
+                        println!("Files to pick: {:?}, {:?}", incoming_file.hash, meta.hash);
                         if incoming_file.hash == meta.hash {
                             found = true;
                         }
@@ -141,16 +138,17 @@ impl<'a> TcpServer<'a> {
 
         let mut file = File::create(&metadata.name_extension).unwrap();
 
+        println!("Writing the file to the disk");
         io::copy(stream, &mut file).unwrap();
 
         metadata
     }
 
-    fn push_metadata(&self, meta: Metadata) {
+    fn push_metadata(&mut self, meta: Metadata) {
         self.metadata.push(meta);
     }
 
-    fn read_metadata_file(&self) -> &mut Vec<Metadata> {
+    fn read_metadata_file(&mut self) -> &mut Vec<Metadata> {
         // let json = fs::read_to_string("./.drive/.meta.json")?;
         // let current_metadata: Vec<Metadata> = serde_json::from_str(&json).unwrap();
 
