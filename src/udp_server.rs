@@ -61,7 +61,11 @@ impl UdpServer {
         Ok(())
     }
 
-    fn get_domain_name(&self, buf: [u8; 512], received: usize) -> Result<DomainName, std::io::Error> {
+    fn get_domain_name(
+        &self,
+        buf: [u8; 512],
+        received: usize,
+    ) -> Result<DomainName, std::io::Error> {
         let packet = Bytes::copy_from_slice(&buf[..received]);
 
         match Dns::decode(packet) {
