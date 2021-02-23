@@ -1,6 +1,6 @@
 [package]
-name = "mdns-client"
-version = "0.1.0"
+name = "drive-server"
+version = "0.1.1"
 authors = ["Ian <ianguimaraes31@gmail>"]
 edition = "2018"
 license = "MIT"
