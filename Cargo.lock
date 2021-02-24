@@ -41,6 +41,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "drive-server"
+version = "0.1.1"
+dependencies = [
+ "bytes",
+ "dns-message-parser",
+ "net2",
+ "pnet",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "glob"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -105,18 +117,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcf3805d4480bb5b86070dcfeb9e2cb2ebc148adb753c5cca5f884d1d65a42b2"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "mdns-client"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "dns-message-parser",
- "net2",
- "pnet",
- "serde",
- "serde_json",
 ]
 
 [[package]]

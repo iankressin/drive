@@ -1,5 +1,5 @@
 use crate::tcp_server;
-use crate::types::{ self, Metadata };
+use crate::types::{self, Metadata};
 use crate::udp_server;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, RwLock};
@@ -8,7 +8,10 @@ use std::thread;
 pub struct DriveServer;
 
 impl DriveServer {
-    pub fn listen(lock: &Arc<RwLock<Vec<Metadata>>>, tx: Sender<Metadata>) -> Result<(), std::io::Error> {
+    pub fn listen(
+        lock: &Arc<RwLock<Vec<Metadata>>>,
+        tx: Sender<Metadata>,
+    ) -> Result<(), std::io::Error> {
         thread::spawn(|| {
             let mdns = udp_server::UdpServer::new();
             mdns.listen().unwrap();
