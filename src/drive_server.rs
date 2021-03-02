@@ -1,7 +1,7 @@
 use crate::tcp_server;
-use crate::types::{self, Metadata};
+use hana_types::Metadata;
 use crate::udp_server;
-use std::sync::mpsc::{channel, Sender};
+use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use std::thread;
 

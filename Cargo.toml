@@ -1,6 +1,6 @@
 [package]
-name = "drive-server"
-version = "0.1.2"
+name = "hana-server"
+version = "0.1.0"
 authors = ["Ian <ianguimaraes31@gmail>"]
 edition = "2018"
 license = "MIT"
@@ -9,6 +9,7 @@ description="Exchange files locally using mDNS"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hana-types="0.1.0"
 dns-message-parser="0.4.2"
 bytes="1.0.1"
 pnet = "0.27.2"

@@ -2,7 +2,7 @@
 // TODO: Check hashes with Merkle tree
 // TODO: Extract meta handling to a new file
 // TODO: Compare if the file is being waited
-use crate::types::{Callback, Metadata};
+use hana_types::Metadata;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io;

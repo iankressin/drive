@@ -42,10 +42,11 @@ dependencies = [
 
 [[package]]
 name = "drive-server"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "dns-message-parser",
+ "hana-types",
  "net2",
  "pnet",
  "serde",
@@ -57,6 +58,15 @@ name = "glob"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8be18de09a56b60ed0edf84bc9df007e30040691af7acd1c41874faac5895bfb"
+
+[[package]]
+name = "hana-types"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4aefd488974cb641d2782fd9645bc01e502b6bf252b81c636310fe66ac4efe46"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hex"
