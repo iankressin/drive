@@ -79,19 +79,8 @@ impl UdpServer {
                 Ok(domain_name.clone())
             }
             Err(_) => {
-                println!("Quebrou");
                 Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
             }
         }
-
-        // let Dns { questions, .. } = Dns::decode(packet);
-
-        // let Question { domain_name, .. } = questions
-        //     .first()
-        //     .expect("No question was asked in this packet");
-
-        // println!("{:#?}", domain_name);
-
-        // domain_name.clone()
     }
 }

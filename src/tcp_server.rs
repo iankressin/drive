@@ -15,14 +15,15 @@ use std::sync::RwLock;
 use std::thread;
 
 pub struct TcpServer<'a> {
-    // metadata: &'a Vec<Metadata>,
+    path: &'a str,
     metadata: &'a Arc<RwLock<Vec<Metadata>>>,
     waiting_list: HashMap<String, String>,
 }
 
 impl<'a> TcpServer<'a> {
-    pub fn new(metadata: &'a Arc<RwLock<Vec<Metadata>>>) -> TcpServer<'a> {
+    pub fn new(path: &'a str, metadata: &'a Arc<RwLock<Vec<Metadata>>>) -> TcpServer<'a> {
         TcpServer {
+            path,
             metadata,
             waiting_list: HashMap::new(),
         }
@@ -52,8 +53,9 @@ impl<'a> TcpServer<'a> {
                 1u8 => {
                     let tx_pipe = mpsc::Sender::clone(&tx);
 
+                    let path_clone = self.path.to_owned();
                     thread::spawn(move || {
-                        let meta = TcpServer::handle_file(&mut stream);
+                        let meta = TcpServer::handle_file(&path_clone, &mut stream);
 
                         match tx_pipe.send(meta) {
                             Ok(_) => println!("Received"),
@@ -92,7 +94,6 @@ impl<'a> TcpServer<'a> {
         let mut requested_files: Vec<&Metadata> = Vec::new();
         let metadata = self.metadata.read().unwrap();
 
-        println!("META SNAPSHOT: {:?}", metadata);
         match metadata.len() {
             0 => {
                 println!("The metada file is empty");
@@ -125,7 +126,7 @@ impl<'a> TcpServer<'a> {
 
     // TODO: Stream timeout
     // TODO: Check if the server is waiting for the file
-    fn handle_file(stream: &mut TcpStream) -> Metadata {
+    fn handle_file(path: &str, stream: &mut TcpStream) -> Metadata {
         let meta_offset = 72;
         let mut buf = [0 as u8; 72];
 
@@ -134,7 +135,7 @@ impl<'a> TcpServer<'a> {
         let metabuf = &buf[0..meta_offset];
         let metadata = TcpServer::get_metadata(&metabuf);
 
-        let mut file = File::create(&metadata.name_extension).unwrap();
+        let mut file = File::create(format!("{}/{}", path, &metadata.name_extension)).unwrap();
 
         println!("Writing the file to the disk");
         io::copy(stream, &mut file).unwrap();
