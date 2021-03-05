@@ -29,7 +29,7 @@ impl<'a> TcpServer<'a> {
         }
     }
 
-    pub fn listen(&mut self, tx: Sender<Metadata>) -> Result<(), std::io::Error> {
+    pub fn listen(&mut self, tx: Sender<Metadata>, keep_alive: &bool) -> Result<(), std::io::Error> {
         println!("TCP Listening...");
 
         let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
@@ -63,7 +63,12 @@ impl<'a> TcpServer<'a> {
                         }
                     });
                 }
-                2u8 => break,
+                2u8 => {
+                    if !keep_alive {
+                        break
+                    } else {
+                        println!("Still running");
+                    }},
                 _ => println!("No op setted in the packet"),
             }
         }

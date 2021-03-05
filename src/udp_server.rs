@@ -13,7 +13,7 @@ impl UdpServer {
         UdpServer
     }
 
-    pub fn listen(&self) -> Result<(), std::io::Error> {
+    pub fn listen(&self, keep_alive: &bool) -> Result<(), std::io::Error> {
         println!("UDP Listening ... ");
 
         let mut buf = [0 as u8; 512];

@@ -12,14 +12,15 @@ impl HanaServer {
         lock: &Arc<RwLock<Vec<Metadata>>>,
         tx: Sender<Metadata>,
         path: &str,
+        keep_alive: bool,
     ) -> Result<(), std::io::Error> {
         thread::spawn(|| {
             let mdns = udp_server::UdpServer::new();
-            mdns.listen().unwrap();
+            mdns.listen(&keep_alive).unwrap();
         });
 
         let mut tcp_server = tcp_server::TcpServer::new(path, &lock);
-        tcp_server.listen(tx).unwrap();
+        tcp_server.listen(tx, &keep_alive).unwrap();
 
         Ok(())
     }
