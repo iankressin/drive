@@ -30,7 +30,9 @@ impl UdpServer {
         match self.get_domain_name(buf, received) {
             Ok(domain_name) => {
                 self.send_response(&socket, &domain_name, &src_addr)?;
-                self.listen(&keep_alive)?;
+                if *keep_alive {
+                    self.listen(&keep_alive)?;
+                }
 
                 Ok(())
             }
