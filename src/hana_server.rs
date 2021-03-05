@@ -14,14 +14,13 @@ impl HanaServer {
         path: &str,
         keep_alive: bool,
     ) -> Result<(), std::io::Error> {
-        let mut tcp_server = tcp_server::TcpServer::new(path, &lock);
-        tcp_server.listen(tx, &keep_alive).unwrap();
-        
         thread::spawn(move || {
             let mdns = udp_server::UdpServer::new();
             mdns.listen(&keep_alive).unwrap();
         });
 
+        let mut tcp_server = tcp_server::TcpServer::new(path, &lock);
+        tcp_server.listen(tx, &keep_alive).unwrap();
 
         Ok(())
     }
