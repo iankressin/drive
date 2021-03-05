@@ -63,10 +63,12 @@ impl<'a> TcpServer<'a> {
                         }
                     });
                 }
+                2u8 => break,
                 _ => println!("No op setted in the packet"),
             }
         }
 
+        println!("Returning");
         Ok(())
     }
 
