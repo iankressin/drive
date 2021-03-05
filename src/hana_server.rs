@@ -1,13 +1,13 @@
 use crate::tcp_server;
-use crate::types::{self, Metadata};
 use crate::udp_server;
-use std::sync::mpsc::{channel, Sender};
+use hana_types::Metadata;
+use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use std::thread;
 
 pub struct HanaServer;
 
-impl HanaServer{
+impl HanaServer {
     pub fn listen(
         lock: &Arc<RwLock<Vec<Metadata>>>,
         tx: Sender<Metadata>,
@@ -18,7 +18,7 @@ impl HanaServer{
             mdns.listen().unwrap();
         });
 
-        let mut tcp_server = tcp_server::TcpServer::new(&lock, path);
+        let mut tcp_server = tcp_server::TcpServer::new(path, &lock);
         tcp_server.listen(tx).unwrap();
 
         Ok(())

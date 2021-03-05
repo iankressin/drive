@@ -9,7 +9,7 @@ use std::io;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
 use std::str;
-use std::sync::mpsc::{self, channel, Sender};
+use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
@@ -51,7 +51,7 @@ impl<'a> TcpServer<'a> {
                     self.handle_metadata(&mut stream);
                 }
                 1u8 => {
-                    let tx_pipe = mpsc::Sender::clone(&tx);
+                    let tx_pipe = Sender::clone(&tx);
 
                     let path_clone = self.path.to_owned();
                     thread::spawn(move || {

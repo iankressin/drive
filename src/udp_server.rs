@@ -78,9 +78,7 @@ impl UdpServer {
 
                 Ok(domain_name.clone())
             }
-            Err(_) => {
-                Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-            }
+            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!")),
         }
     }
 }
