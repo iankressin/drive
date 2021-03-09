@@ -49,7 +49,7 @@ impl<'a> TcpServer<'a> {
             match op[0] {
                 0u8 => {
                     self.handle_metadata(&mut stream);
-                }
+                },
                 1u8 => {
                     let tx_pipe = Sender::clone(&tx);
 
@@ -62,13 +62,14 @@ impl<'a> TcpServer<'a> {
                             Err(err) => println!("Erro: {}", err),
                         }
                     });
-                }
+                },
                 2u8 => {
                     if !keep_alive {
                         break
                     } else {
                         println!("Still running");
-                    }},
+                    }
+                },
                 _ => println!("No op setted in the packet"),
             }
         }
@@ -134,12 +135,12 @@ impl<'a> TcpServer<'a> {
     // TODO: Stream timeout
     // TODO: Check if the server is waiting for the file
     fn handle_file(path: &str, stream: &mut TcpStream) -> Metadata {
-        let meta_offset = 72;
-        let mut buf = [0 as u8; 72];
+        const META_OFFSET: usize = 71;
+        let mut buf = [0 as u8; META_OFFSET];
 
         stream.read(&mut buf).unwrap();
 
-        let metabuf = &buf[0..meta_offset];
+        let metabuf = &buf[0..META_OFFSET];
         let metadata = TcpServer::get_metadata(&metabuf);
 
         let mut file = File::create(format!("{}/{}", path, &metadata.name_extension)).unwrap();
