@@ -1,4 +1,3 @@
-// TODO: Thread pool
 // TODO: Checksum
 // TODO: Extract meta handling to a new file
 // TODO: Compare if the file is being waited
@@ -13,7 +12,6 @@ use std::str;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::RwLock;
-use std::thread;
 
 pub struct TcpServer<'a> {
     path: &'a str,
