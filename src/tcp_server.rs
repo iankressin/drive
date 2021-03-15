@@ -1,7 +1,8 @@
 // TODO: Thread pool
-// TODO: Check hashes with Merkle tree
+// TODO: Checksum
 // TODO: Extract meta handling to a new file
 // TODO: Compare if the file is being waited
+use crate::thread_pool::ThreadPool;
 use hana_types::Metadata;
 use std::collections::HashMap;
 use std::fs::File;
@@ -29,17 +30,21 @@ impl<'a> TcpServer<'a> {
         }
     }
 
-    pub fn listen(&mut self, tx: Sender<Metadata>, keep_alive: &bool) -> Result<(), std::io::Error> {
+    pub fn listen(
+        &mut self,
+        tx: Sender<Metadata>,
+        keep_alive: &bool,
+    ) -> Result<(), std::io::Error> {
         println!("TCP Listening...");
 
         let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
+        let pool = ThreadPool::new(10);
 
         // The first part of the handshake is to receive the
         // metadata file which contains the files that the client
         // is trying to send and decide which files the server
         // want to receive
         for stream in listener.incoming() {
-            // println!("Current state of the meta: {:?}", self.metadata);
             // A thread that is responsible for writing to meta file
             // Which operation the client wants to execute
             let mut op = [0 as u8; 1];
@@ -49,12 +54,12 @@ impl<'a> TcpServer<'a> {
             match op[0] {
                 0u8 => {
                     self.handle_metadata(&mut stream);
-                },
+                }
                 1u8 => {
                     let tx_pipe = Sender::clone(&tx);
 
                     let path_clone = self.path.to_owned();
-                    thread::spawn(move || {
+                    pool.execute(move || {
                         let meta = TcpServer::handle_file(&path_clone, &mut stream);
 
                         match tx_pipe.send(meta) {
@@ -62,19 +67,18 @@ impl<'a> TcpServer<'a> {
                             Err(err) => println!("Erro: {}", err),
                         }
                     });
-                },
+                }
                 2u8 => {
                     if !keep_alive {
-                        break
+                        break;
                     } else {
                         println!("Still running");
                     }
-                },
+                }
                 _ => println!("No op setted in the packet"),
             }
         }
 
-        println!("Returning");
         Ok(())
     }
 
@@ -87,7 +91,7 @@ impl<'a> TcpServer<'a> {
         // This could be a problem if buffer has a 0 in the middle of it
         // TODO: Find a better solution
         let eos = buf.iter().position(|&r| r == 0).unwrap();
-        // println!("End of stream >>>>>>>> {:?}, {}", buf, eos);
+
         let json = String::from_utf8_lossy(&buf[..eos]);
 
         let incoming_metadata: Vec<Metadata> = serde_json::from_str(&json).unwrap();
@@ -95,6 +99,7 @@ impl<'a> TcpServer<'a> {
         let requested_files = self.pick_files(&incoming_metadata);
 
         stream.write(requested_files.as_bytes()).unwrap();
+
         stream.flush().unwrap();
     }
 
@@ -113,7 +118,6 @@ impl<'a> TcpServer<'a> {
                     let mut found = false;
 
                     for meta in metadata.iter() {
-                        println!("Files to pick: {:?}, {:?}", incoming_file.hash, meta.hash);
                         if incoming_file.hash == meta.hash {
                             found = true;
                         }
